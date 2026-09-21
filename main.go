@@ -23,13 +23,13 @@ func printVersion() {
 func printHelp() {
 	println("fontman - font manager for Linux (Pure Go)\n")
 	println("usage:")
-	println("  fontman list [-u]        List system fonts (-u for user-installed only)")
-	println("  fontman install <path>   Install fonts (.ttf, .otf, .zip, or directory)")
-	println("  fontman grep [-u] <term> Filter installed fonts by filename/path")
-	println("  fontman info <path>      Display file information for a font")
-	println("  fontman help             Display this help message")
+	println("  fontman list [-u/--user]                List system fonts (-u for user-installed only)")
+	println("  fontman install <path>           Install fonts (.ttf, .otf, .zip, or directory)")
+	println("  fontman remove <term> [-g/--global] Remove fonts (user only by default, --global for system)")
+	println("  fontman grep [-u/--user] <term>         Filter installed fonts by filename/path")
+	println("  fontman info <term>              Display file information and metadata for a font")
+	println("  fontman help                     Display this help message")
 }
-
 func isFont(path string) bool {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".ttf", ".otf", ".ttc":
