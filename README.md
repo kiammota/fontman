@@ -47,9 +47,7 @@ fontman info "0xProto"
 ## Installation
 
 ```bash
-git clone https://github.com/KiamMota/fontman.git
-cd fontman
-go install
+go install github.com/KiamMota/fontman@latest
 ```
 
 ## License
