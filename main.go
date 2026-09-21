@@ -329,6 +329,71 @@ func main() {
 		}
 		println(s)
 
+	case "remove":
+		if len(commandArgs) == 0 {
+			println("require <pattern> argument")
+			return
+		}
+
+		searchTerm := commandArgs[0]
+
+		fonts, errList := manager.LoadFonts()
+		if errList != nil {
+			fmt.Printf("failed to load fonts: %s\n", errList.Error())
+			return
+		}
+
+		normalize := func(s string) string {
+			s = strings.ToLower(s)
+			s = strings.ReplaceAll(s, " ", "")
+			s = strings.ReplaceAll(s, "-", "")
+			s = strings.ReplaceAll(s, "_", "")
+			return s
+		}
+
+		searchTermNormalized := normalize(searchTerm)
+		var fontsToRemove []string
+
+		// Encontra TODAS as fontes que combinam com o termo
+		for _, f := range fonts {
+			fileNameNormalized := normalize(filepath.Base(f))
+			if strings.Contains(fileNameNormalized, searchTermNormalized) {
+				fontsToRemove = append(fontsToRemove, f)
+			}
+		}
+
+		if len(fontsToRemove) == 0 {
+			fmt.Printf("No fonts found matching: %s\n", searchTerm)
+			return
+		}
+
+		// Padrão Linux: Lista o que vai ser afetado
+		fmt.Printf("The following %d font(s) will be REMOVED:\n", len(fontsToRemove))
+		for _, f := range fontsToRemove {
+			fmt.Printf("  %s\n", filepath.Base(f))
+		}
+
+		// Pede confirmação
+		fmt.Print("\nDo you want to continue? [y/N]: ")
+		var response string
+		fmt.Scanln(&response)
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		// Só prossegue se o usuário digitar 'y' ou 'yes'
+		if response == "y" || response == "yes" {
+			for _, f := range fontsToRemove {
+				err := os.Remove(f)
+				if err != nil {
+					fmt.Printf("error removing %s: %v\n", filepath.Base(f), err)
+				} else {
+					fmt.Printf("removed: %s\n", filepath.Base(f))
+				}
+			}
+			fmt.Println("Done.")
+		} else {
+			fmt.Println("Aborted.")
+		}
+
 	case "info":
 		if len(commandArgs) == 0 {
 			println("require <font_path_or_name> argument")
@@ -345,10 +410,19 @@ func main() {
 			// Usa o cache interno via LoadFonts
 			fonts, errList := manager.LoadFonts()
 			if errList == nil {
-				searchTermNormalized := strings.ReplaceAll(strings.ToLower(searchTerm), " ", "")
+				// Função aninhada para limpar totalmente a string
+				normalize := func(s string) string {
+					s = strings.ToLower(s)
+					s = strings.ReplaceAll(s, " ", "")
+					s = strings.ReplaceAll(s, "-", "")
+					s = strings.ReplaceAll(s, "_", "")
+					return s
+				}
+
+				searchTermNormalized := normalize(searchTerm)
 
 				for _, f := range fonts {
-					fileNameNormalized := strings.ReplaceAll(strings.ToLower(filepath.Base(f)), " ", "")
+					fileNameNormalized := normalize(filepath.Base(f))
 					if strings.Contains(fileNameNormalized, searchTermNormalized) {
 						fontPath = f
 						info, err = os.Stat(fontPath)
@@ -367,10 +441,22 @@ func main() {
 		fmt.Printf("Size: %d bytes\n", info.Size())
 		fmt.Printf("Mode: %s\n", info.Mode().String())
 		fmt.Printf("Modified: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
-		fmt.Println("\n(Note: Extracting internal font family/style data requires a TTF/OTF binary parser instead of fontconfig)")
-	
+
+		// Faz a chamada para a função que está em parser.go
+		family, style, fullName, version, err := GetFontDetails(fontPath)
+		if err == nil {
+			fmt.Printf("\n--- Font Metadata ---\n")
+			fmt.Printf("Family:    %s\n", family)
+			fmt.Printf("Style:     %s\n", style)
+			fmt.Printf("Full Name: %s\n", fullName)
+			fmt.Printf("Version:   %s\n", version)
+		} else {
+			fmt.Printf("\n[!] Could not extract metadata: %s\n", err.Error())
+		}
+
 	default:
 		fmt.Printf("unknown command: %s\n", cmd)
 		printHelp()
 	}
+
 }
