@@ -21,15 +21,33 @@ func printVersion() {
 }
 
 func printHelp() {
-	println("fontman - font manager for Linux (Pure Go)\n")
-	println("usage:")
-	println("  fontman list [-u/--user]                List system fonts (-u for user-installed only)")
-	println("  fontman install <path>           Install fonts (.ttf, .otf, .zip, or directory)")
-	println("  fontman remove <term> [-g/--global] Remove fonts (user only by default, --global for system)")
-	println("  fontman grep [-u/--user] <term>         Filter installed fonts by filename/path")
-	println("  fontman info <term>              Display file information and metadata for a font")
-	println("  fontman help                     Display this help message")
+	commands := []struct {
+		command string
+		desc    string
+	}{
+		{"fontman list [-u/--user]", "List system fonts (-u for user-installed only)"},
+		{"fontman install <path>", "Install fonts (.ttf, .otf, .zip, or directory)"},
+		{"fontman remove <term> [-g/--global]", "Remove fonts (user only by default, --global for system)"},
+		{"fontman grep [-u/--user] <term>", "Filter installed fonts by filename/path"},
+		{"fontman info <term>", "Display file information and metadata for a font"},
+		{"fontman help", "Display this help message"},
+	}
+
+	width := 0
+	for _, command := range commands {
+		if len(command.command) > width {
+			width = len(command.command)
+		}
+	}
+
+	fmt.Println("fontman - font manager for Linux (Pure Go)\n")
+	fmt.Println("usage:")
+
+	for _, command := range commands {
+		fmt.Printf("  %-*s  %s\n", width, command.command, command.desc)
+	}
 }
+
 func isFont(path string) bool {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".ttf", ".otf", ".ttc":
